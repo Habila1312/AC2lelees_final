@@ -1,0 +1,41 @@
+package com.facens.gamificacao;
+
+import com.facens.gamificacao.entity.Student;
+import com.facens.gamificacao.entity.StudentEmail;
+import com.facens.gamificacao.repository.StudentRepository;
+import com.facens.gamificacao.service.StudentService;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Mockito;
+import java.util.Arrays;
+import java.util.List;
+import static org.junit.jupiter.api.Assertions.*;
+
+public class StudentServiceTest {
+
+    @Mock
+    private StudentRepository studentRepository;
+
+    @InjectMocks
+    private StudentService studentService;
+
+    public StudentServiceTest() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @Test
+    public void testProcessRewards() {
+        Student s1 = new Student(1L, "Lara", 15, 2, new StudentEmail("l@e.com"));
+        Student s2 = new Student(2L, "Joao", 5, 1, new StudentEmail("j@e.com"));
+        List<Student> list = Arrays.asList(s1, s2);
+        Mockito.when(studentRepository.findAll()).thenReturn(list);
+
+        studentService.processRewards();
+
+        Mockito.verify(studentRepository, Mockito.times(1)).save(s1);
+        assertEquals(3, s1.getAvailableCourses());
+        assertEquals(1, s2.getAvailableCourses());
+    }
+}
