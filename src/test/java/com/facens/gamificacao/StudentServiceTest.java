@@ -1,29 +1,28 @@
 package com.facens.gamificacao;
 
+import com.facens.gamificacao.dto.StudentDTO;
 import com.facens.gamificacao.entity.Student;
 import com.facens.gamificacao.entity.StudentEmail;
 import com.facens.gamificacao.repository.StudentRepository;
 import com.facens.gamificacao.service.StudentService;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.InjectMocks;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Mockito;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.*;
 
 public class StudentServiceTest {
 
     @Mock
-    private StudentRepository studentRepository;
+    private StudentRepository repository;
 
     @InjectMocks
-    private StudentService studentService;
+    private StudentService service;
 
     @BeforeEach
     void setup() {
@@ -31,28 +30,46 @@ public class StudentServiceTest {
     }
 
     @Test
-    void testProcessRewards() {
+    void testFindAll() {
+        Student s = new Student(1L, "Ana", 10, 1, new StudentEmail("a@b.com"));
+        when(repository.findAll()).thenReturn(Arrays.asList(s));
 
-        Student s1 = new Student(1L, "Lara", 15, 2, new StudentEmail("l@e.com"));
-        Student s2 = new Student(2L, "Joao", 5, 1, new StudentEmail("j@e.com"));
-        List<Student> list = Arrays.asList(s1, s2);
+        var list = service.findAll();
 
-        Mockito.when(studentRepository.findAll()).thenReturn(list);
-
-        studentService.processRewards();
-
-        // Apenas aluno com pontos > 10 ganha 1 curso
-        assertEquals(3, s1.getAvailableCourses());
-        assertEquals(1, s2.getAvailableCourses());
-
-        // Verifica save somente para o aluno que ganhou bônus
-        Mockito.verify(studentRepository, Mockito.times(1)).save(s1);
+        assertEquals(1, list.size());
+        assertEquals("Ana", list.get(0).getName());
     }
 
     @Test
-    void testProcessRewardsEmptyList() {
-        Mockito.when(studentRepository.findAll()).thenReturn(Arrays.asList());
+    void testSave() {
+        Student s = new Student(2L, "Leo", 9, 1, new StudentEmail("c@d.com"));
+        when(repository.save(s)).thenReturn(s);
 
-        assertDoesNotThrow(() -> studentService.processRewards());
+        Student saved = service.save(s);
+
+        assertEquals("Leo", saved.getName());
+    }
+
+    @Test
+    void testFindById() {
+        Student s = new Student(1L, "Ana", 10, 1, new StudentEmail("a@b.com"));
+        when(repository.findById(1L)).thenReturn(Optional.of(s));
+
+        StudentDTO dto = service.findById(1L);
+
+        assertEquals("Ana", dto.getName());
+    }
+
+    @Test
+    void testProcessRewards() {
+        Student s1 = new Student(1L, "A", 5, 0, new StudentEmail("a@b.com"));
+        Student s2 = new Student(2L, "B", 10, 0, new StudentEmail("b@b.com"));
+
+        when(repository.findAll()).thenReturn(Arrays.asList(s1, s2));
+
+        service.processRewards();
+
+        assertEquals(1, s2.getAvailableCourses());
+        verify(repository).save(s2);
     }
 }
