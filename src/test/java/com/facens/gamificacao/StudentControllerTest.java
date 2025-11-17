@@ -3,7 +3,6 @@ package com.facens.gamificacao;
 import com.facens.gamificacao.controller.StudentController;
 import com.facens.gamificacao.dto.StudentDTO;
 import com.facens.gamificacao.entity.Student;
-import com.facens.gamificacao.entity.StudentEmail;
 import com.facens.gamificacao.service.StudentService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +17,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -33,11 +32,11 @@ public class StudentControllerTest {
     private StudentService studentService;
 
     @Autowired
-    private ObjectMapper mapper;
+    private ObjectMapper objectMapper;
 
     @Test
     void testGetAll() throws Exception {
-        Mockito.when(studentService.findAll()).thenReturn(Arrays.asList());
+        Mockito.when(studentService.findAll()).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/students"))
                 .andExpect(status().isOk());
@@ -45,7 +44,7 @@ public class StudentControllerTest {
 
     @Test
     void testGetById() throws Exception {
-        Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
+        Student s = new Student(1L, "Lara", 15, 2);
         StudentDTO dto = new StudentDTO(s);
 
         Mockito.when(studentService.findById(1L)).thenReturn(dto);
@@ -58,14 +57,14 @@ public class StudentControllerTest {
 
     @Test
     void testCreate() throws Exception {
-        Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
+        Student s = new Student(1L, "Lara", 15, 2);
         Mockito.when(studentService.save(Mockito.any())).thenReturn(s);
 
-        String body = mapper.writeValueAsString(s);
+        String json = objectMapper.writeValueAsString(s);
 
         mockMvc.perform(post("/students")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(body))
+                .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/students/1"));
     }
