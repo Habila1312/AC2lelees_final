@@ -105,4 +105,16 @@ public class StudentServiceTest {
         assertEquals(4, s2.getAvailableCourses());
         verify(studentRepository, times(1)).save(s2);
     }
+    @Test
+void testProcessRewardsStreamReturnsNull() {
+    // Lista com elementos, mas sem "max" válido
+    // Forçamos isso retornando uma lista vazia APÓS o if inicial
+    when(studentRepository.findAll()).thenReturn(Arrays.asList(), Arrays.asList());
+
+    studentService.processRewards();
+
+    // Nenhuma chamada ao save, pois mostActive será null
+    verify(studentRepository, never()).save(any());
+}
+
 }
