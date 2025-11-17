@@ -1,6 +1,7 @@
 package com.facens.gamificacao;
 
 import com.facens.gamificacao.controller.StudentController;
+import com.facens.gamificacao.dto.StudentDTO;
 import com.facens.gamificacao.entity.Student;
 import com.facens.gamificacao.entity.StudentEmail;
 import com.facens.gamificacao.service.StudentService;
@@ -19,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -37,20 +39,28 @@ public class StudentControllerTest {
 
     @Test
     public void testGetAll() throws Exception {
-        Mockito.when(studentService.findAll()).thenReturn(Arrays.asList());
+
+        Student s1 = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
+        StudentDTO dto1 = new StudentDTO(s1);
+
+        Mockito.when(studentService.findAll())
+                .thenReturn(List.of(dto1));
 
         mockMvc.perform(get("/students"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Lara"));
     }
 
     @Test
     public void testGetById() throws Exception {
         Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
 
-        Mockito.when(studentService.findById(1L)).thenReturn(Optional.of(s));
+        Mockito.when(studentService.findById(1L))
+                .thenReturn(Optional.of(s));
 
         mockMvc.perform(get("/students/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Lara"));
     }
 
     @Test
@@ -58,14 +68,26 @@ public class StudentControllerTest {
         Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
 
         Mockito.when(studentService.save(Mockito.any(Student.class)))
-               .thenReturn(s);
+                .thenReturn(s);
 
         String json = objectMapper.writeValueAsString(s);
 
-        mockMvc.perform(post("/students")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+        mockMvc.perform(
+                post("/students")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json)
+        )
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/students/1"));
+                .andExpect(header().string("Location", "/students/1"))
+                .andExpect(jsonPath("$.name").value("Lara"));
+    }
+
+    @Test
+    public void testProcessRewards() throws Exception {
+
+        Mockito.doNothing().when(studentService).processRewards();
+
+        mockMvc.perform(post("/students/rewards"))
+                .andExpect(status().isOk());
     }
 }
