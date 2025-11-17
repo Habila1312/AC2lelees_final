@@ -1,15 +1,18 @@
 package com.facens.gamificacao;
 
+import com.facens.gamificacao.dto.StudentDTO;
 import com.facens.gamificacao.entity.Student;
 import com.facens.gamificacao.entity.StudentEmail;
 import com.facens.gamificacao.repository.StudentRepository;
 import com.facens.gamificacao.service.StudentService;
 
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-import java.util.Optional;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -17,49 +20,65 @@ import static org.mockito.Mockito.*;
 
 public class StudentServiceTest {
 
+    @Mock
+    private StudentRepository studentRepository;
+
+    @InjectMocks
+    private StudentService studentService;
+
+    public StudentServiceTest() {
+        MockitoAnnotations.openMocks(this);
+    }
+
     @Test
     public void testFindAll() {
-        StudentRepository repo = mock(StudentRepository.class);
-        StudentService service = new StudentService(repo);
 
-        Student s = new Student(1L, "Lara", 10, 1, new StudentEmail("a@b.com"));
+        Student s1 = new Student(1L, "Lara", 10, 1, new StudentEmail("a@b.com"));
+        Student s2 = new Student(2L, "Joao", 5, 3, new StudentEmail("c@d.com"));
 
-        when(repo.findAll()).thenReturn(Arrays.asList(s));
+        when(studentRepository.findAll()).thenReturn(Arrays.asList(s1, s2));
 
-        List<Student> result = service.findAll();
+        List<StudentDTO> result = studentService.findAll();
 
-        assertEquals(1, result.size());
+        assertEquals(2, result.size());
         assertEquals("Lara", result.get(0).getName());
     }
 
     @Test
     public void testFindById() {
-        StudentRepository repo = mock(StudentRepository.class);
-        StudentService service = new StudentService(repo);
 
-        Student s = new Student(1L, "Lara", 10, 1, new StudentEmail("a@b.com"));
+        Student s1 = new Student(1L, "Lara", 10, 1, new StudentEmail("a@b.com"));
 
-        when(repo.findById(1L)).thenReturn(Optional.of(s));
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(s1));
 
-        Optional<Student> result = service.findById(1L);
+        StudentDTO result = studentService.findById(1L);
 
-        assertTrue(result.isPresent());
-        assertEquals("Lara", result.get().getName());
+        assertEquals("Lara", result.getName());
     }
 
     @Test
     public void testSave() {
-        StudentRepository repo = mock(StudentRepository.class);
-        StudentService service = new StudentService(repo);
 
         Student s = new Student(null, "Lara", 10, 1, new StudentEmail("a@b.com"));
 
-        when(repo.save(s)).thenReturn(
-                new Student(1L, "Lara", 10, 1, new StudentEmail("a@b.com"))
-        );
+        when(studentRepository.save(s)).thenReturn(s);
 
-        Student saved = service.save(s);
+        Student saved = studentService.save(s);
 
-        assertEquals(1L, saved.getId());
+        assertEquals("Lara", saved.getName());
+    }
+
+    @Test
+    public void testProcessRewards() {
+
+        Student s1 = new Student(1L, "Lara", 20, 1, new StudentEmail("a@b.com"));
+        Student s2 = new Student(2L, "Joao", 5, 1, new StudentEmail("c@d.com"));
+
+        when(studentRepository.findAll()).thenReturn(Arrays.asList(s1, s2));
+
+        studentService.processRewards();
+
+        assertEquals(2, s1.getAvailableCourses());
+        verify(studentRepository, times(1)).save(s1);
     }
 }
