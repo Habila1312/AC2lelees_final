@@ -22,6 +22,13 @@ public class StudentController {
         return studentService.findAll();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<StudentDTO> getById(@PathVariable Long id) {
+        return studentService.findById(id)
+                .map(student -> ResponseEntity.ok(new StudentDTO(student)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @PostMapping
     public ResponseEntity<StudentDTO> create(@RequestBody Student student) {
         Student saved = studentService.save(student);
