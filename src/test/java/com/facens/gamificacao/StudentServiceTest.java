@@ -113,6 +113,19 @@ void testProcessRewardsStreamReturnsNull() {
 
     verify(studentRepository, never()).save(any());
 }
+@Test
+void testProcessRewardsWithTieScore() {
+    Student s1 = new Student(1L, "A", 10, 1);
+    Student s2 = new Student(2L, "B", 10, 2);
+
+    when(studentRepository.findAll()).thenReturn(Arrays.asList(s1, s2));
+
+    studentService.processRewards();
+
+    // O primeiro da lista deve ganhar, pois o score empata
+    assertEquals(2, s1.getAvailableCourses());
+    verify(studentRepository, times(1)).save(s1);
+}
 
 
 }
