@@ -42,7 +42,10 @@ public class StudentControllerTest {
     @Test
     public void testGetById() throws Exception {
         Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
-        Mockito.when(studentService.findById(1L)).thenReturn(s);
+StudentDTO dto = new StudentDTO(s);
+
+Mockito.when(studentService.findById(1L)).thenReturn(dto);
+
 
         mockMvc.perform(get("/students/1"))
                 .andExpect(status().isOk());
