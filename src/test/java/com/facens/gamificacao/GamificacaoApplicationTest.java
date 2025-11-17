@@ -17,4 +17,10 @@ class GamificacaoApplicationTest {
         // Testa o método main diretamente (necessário para Jacoco)
         GamificacaoApplication.main(new String[]{});
     }
+    @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+public class GamificacaoApplicationTest {
+    @Test
+    void contextLoads() {}
+}
+
 }
