@@ -1,27 +1,29 @@
 package com.facens.gamificacao;
 
 import com.facens.gamificacao.controller.StudentController;
+import com.facens.gamificacao.dto.StudentDTO;
 import com.facens.gamificacao.entity.Student;
 import com.facens.gamificacao.entity.StudentEmail;
 import com.facens.gamificacao.service.StudentService;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.facens.gamificacao.dto.StudentDTO;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
-import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(controllers = StudentController.class)
+@WebMvcTest(StudentController.class)
 public class StudentControllerTest {
 
     @Autowired
@@ -31,10 +33,10 @@ public class StudentControllerTest {
     private StudentService studentService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private ObjectMapper mapper;
 
     @Test
-    public void testGetAll() throws Exception {
+    void testGetAll() throws Exception {
         Mockito.when(studentService.findAll()).thenReturn(Arrays.asList());
 
         mockMvc.perform(get("/students"))
@@ -42,29 +44,37 @@ public class StudentControllerTest {
     }
 
     @Test
-    public void testGetById() throws Exception {
+    void testGetById() throws Exception {
         Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
+        StudentDTO dto = new StudentDTO(s);
 
-        Mockito.when(studentService.findById(1L))
-                .thenReturn(Optional.of(s));
+        Mockito.when(studentService.findById(1L)).thenReturn(dto);
 
         mockMvc.perform(get("/students/1"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Lara"))
+                .andExpect(jsonPath("$.commentsCount").value(15));
     }
 
     @Test
-    public void testCreate() throws Exception {
+    void testCreate() throws Exception {
         Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
+        Mockito.when(studentService.save(Mockito.any())).thenReturn(s);
 
-        Mockito.when(studentService.save(Mockito.any(Student.class)))
-                .thenReturn(s);
-
-        String json = objectMapper.writeValueAsString(s);
+        String body = mapper.writeValueAsString(s);
 
         mockMvc.perform(post("/students")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(json))
+                .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/students/1"));
+    }
+
+    @Test
+    void testRewards() throws Exception {
+        mockMvc.perform(post("/students/rewards"))
+                .andExpect(status().isOk());
+
+        Mockito.verify(studentService, Mockito.times(1)).processRewards();
     }
 }
