@@ -107,14 +107,12 @@ public class StudentServiceTest {
     }
     @Test
 void testProcessRewardsStreamReturnsNull() {
-    // Lista com elementos, mas sem "max" válido
-    // Forçamos isso retornando uma lista vazia APÓS o if inicial
-    when(studentRepository.findAll()).thenReturn(Arrays.asList(), Arrays.asList());
+    when(studentRepository.findAll()).thenReturn(Arrays.asList());
 
     studentService.processRewards();
 
-    // Nenhuma chamada ao save, pois mostActive será null
     verify(studentRepository, never()).save(any());
 }
+
 
 }
