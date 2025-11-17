@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,10 +44,9 @@ public class StudentControllerTest {
     @Test
     public void testGetById() throws Exception {
         Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
-StudentDTO dto = new StudentDTO(s);
 
-Mockito.when(studentService.findById(1L)).thenReturn(dto);
-
+        Mockito.when(studentService.findById(1L))
+                .thenReturn(Optional.of(s));
 
         mockMvc.perform(get("/students/1"))
                 .andExpect(status().isOk());
@@ -55,7 +55,9 @@ Mockito.when(studentService.findById(1L)).thenReturn(dto);
     @Test
     public void testCreate() throws Exception {
         Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
-        Mockito.when(studentService.save(Mockito.any(Student.class))).thenReturn(s);
+
+        Mockito.when(studentService.save(Mockito.any(Student.class)))
+                .thenReturn(s);
 
         String json = objectMapper.writeValueAsString(s);
 
