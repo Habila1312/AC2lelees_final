@@ -28,4 +28,13 @@ public class Student {
     private int availableCourses;
     @Embedded
     private StudentEmail email;
+
+    // Construtor adicional para testes sem precisar do email
+    public Student(Long id, String name, int commentsCount, int availableCourses) {
+        this.id = id;
+        this.name = name;
+        this.commentsCount = commentsCount;
+        this.availableCourses = availableCourses;
+        this.email = null; // email fica nulo
+    }
 }
