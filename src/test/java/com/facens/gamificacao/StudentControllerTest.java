@@ -5,6 +5,7 @@ import com.facens.gamificacao.entity.Student;
 import com.facens.gamificacao.entity.StudentEmail;
 import com.facens.gamificacao.service.StudentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.facens.gamificacao.dto.StudentDTO;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
