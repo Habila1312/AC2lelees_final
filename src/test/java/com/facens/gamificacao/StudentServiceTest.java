@@ -44,17 +44,19 @@ public class StudentServiceTest {
         assertEquals("Lara", result.get(0).getName());
     }
 
-    @Test
-    public void testFindById() {
+   @Test
+public void testFindById() {
 
-        Student s1 = new Student(1L, "Lara", 10, 1, new StudentEmail("a@b.com"));
+    Student s1 = new Student(1L, "Lara", 10, 1, new StudentEmail("a@b.com"));
 
-        when(studentRepository.findById(1L)).thenReturn(Optional.of(s1));
+    when(studentRepository.findById(1L)).thenReturn(Optional.of(s1));
 
-        StudentDTO result = studentService.findById(1L);
+    Optional<Student> result = studentService.findById(1L);
 
-        assertEquals("Lara", result.getName());
-    }
+    assertTrue(result.isPresent());
+    assertEquals("Lara", result.get().getName());
+}
+
 
     @Test
     public void testSave() {
