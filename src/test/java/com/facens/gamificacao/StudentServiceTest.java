@@ -45,7 +45,14 @@ public class StudentServiceTest {
         assertEquals(3, s1.getAvailableCourses());
         assertEquals(1, s2.getAvailableCourses());
 
-        // Salva apenas s1
+        // Verifica save somente para o aluno que ganhou bônus
         Mockito.verify(studentRepository, Mockito.times(1)).save(s1);
+    }
+
+    @Test
+    void testProcessRewardsEmptyList() {
+        Mockito.when(studentRepository.findAll()).thenReturn(Arrays.asList());
+
+        assertDoesNotThrow(() -> studentService.processRewards());
     }
 }
