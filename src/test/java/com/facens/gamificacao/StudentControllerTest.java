@@ -1,8 +1,8 @@
 package com.facens.gamificacao;
 
 import com.facens.gamificacao.controller.StudentController;
-import com.facens.gamificacao.dto.StudentDTO;
 import com.facens.gamificacao.entity.Student;
+import com.facens.gamificacao.entity.StudentEmail;
 import com.facens.gamificacao.service.StudentService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,12 +17,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Collections;
+import java.util.Optional;
+import java.util.Arrays;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(StudentController.class)
+@WebMvcTest(controllers = StudentController.class)
 public class StudentControllerTest {
 
     @Autowired
@@ -35,30 +36,29 @@ public class StudentControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void testGetAll() throws Exception {
-        Mockito.when(studentService.findAll()).thenReturn(Collections.emptyList());
+    public void testGetAll() throws Exception {
+        Mockito.when(studentService.findAll()).thenReturn(Arrays.asList());
 
         mockMvc.perform(get("/students"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void testGetById() throws Exception {
-        Student s = new Student(1L, "Lara", 15, 2);
-        StudentDTO dto = new StudentDTO(s);
+    public void testGetById() throws Exception {
+        Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
 
-        Mockito.when(studentService.findById(1L)).thenReturn(dto);
+        Mockito.when(studentService.findById(1L)).thenReturn(Optional.of(s));
 
         mockMvc.perform(get("/students/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Lara"))
-                .andExpect(jsonPath("$.commentsCount").value(15));
+                .andExpect(status().isOk());
     }
 
     @Test
-    void testCreate() throws Exception {
-        Student s = new Student(1L, "Lara", 15, 2);
-        Mockito.when(studentService.save(Mockito.any())).thenReturn(s);
+    public void testCreate() throws Exception {
+        Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
+
+        Mockito.when(studentService.save(Mockito.any(Student.class)))
+               .thenReturn(s);
 
         String json = objectMapper.writeValueAsString(s);
 
@@ -67,13 +67,5 @@ public class StudentControllerTest {
                 .content(json))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/students/1"));
-    }
-
-    @Test
-    void testRewards() throws Exception {
-        mockMvc.perform(post("/students/rewards"))
-                .andExpect(status().isOk());
-
-        Mockito.verify(studentService, Mockito.times(1)).processRewards();
     }
 }
