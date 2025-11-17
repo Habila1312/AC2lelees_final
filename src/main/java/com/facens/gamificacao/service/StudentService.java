@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,17 +30,16 @@ public class StudentService {
         return studentRepository.save(s);
     }
 
-    // Buscar estudante por ID  (MÉTODO QUE O JENKINS ESTÁ COBRANDO)
-    public StudentDTO findById(Long id) {
+    // O QUE O CONTROLLER E OS TESTES ESPERAM
+    public Optional<Student> findById(Long id) {
+        return studentRepository.findById(id);
+    }
+
+    // Se você quiser continuar usando DTO internamente (opcional)
+    public StudentDTO findDtoById(Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
         return new StudentDTO(student);
-    }
-
-    // Usado caso você precise retornar a entidade completa
-    public Student findEntityById(Long id) {
-        return studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
     }
 
     // Lógica de gamificação
