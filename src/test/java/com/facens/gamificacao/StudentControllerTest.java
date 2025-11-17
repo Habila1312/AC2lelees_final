@@ -1,93 +1,84 @@
-package com.facens.gamificacao;
+package com.facens.gamificacao.controller;
 
-import com.facens.gamificacao.controller.StudentController;
 import com.facens.gamificacao.dto.StudentDTO;
 import com.facens.gamificacao.entity.Student;
-import com.facens.gamificacao.entity.StudentEmail;
 import com.facens.gamificacao.service.StudentService;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.http.ResponseEntity;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Optional;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@WebMvcTest(controllers = StudentController.class)
 public class StudentControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockBean
+    @Mock
     private StudentService studentService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    @InjectMocks
+    private StudentController controller;
 
-    @Test
-    public void testGetAll() throws Exception {
-
-        Student s1 = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
-        StudentDTO dto1 = new StudentDTO(s1);
-
-        Mockito.when(studentService.findAll())
-                .thenReturn(List.of(dto1));
-
-        mockMvc.perform(get("/students"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("Lara"));
+    @BeforeEach
+    void setup() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    public void testGetById() throws Exception {
-        Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
+    void testGetAll() {
+        StudentDTO s1 = new StudentDTO(new Student(1L, "A", 2, 1));
+        StudentDTO s2 = new StudentDTO(new Student(2L, "B", 5, 2));
 
-        Mockito.when(studentService.findById(1L))
-                .thenReturn(Optional.of(s));
+        when(studentService.findAll()).thenReturn(Arrays.asList(s1, s2));
 
-        mockMvc.perform(get("/students/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Lara"));
+        List<StudentDTO> result = controller.getAll();
+
+        assertEquals(2, result.size());
     }
 
     @Test
-    public void testCreate() throws Exception {
-        Student s = new Student(1L, "Lara", 15, 2, new StudentEmail("a@b.com"));
+    void testGetByIdFound() {
+        Student s = new Student(1L, "Teste", 4, 1);
+        when(studentService.findById(1L)).thenReturn(Optional.of(s));
 
-        Mockito.when(studentService.save(Mockito.any(Student.class)))
-                .thenReturn(s);
+        ResponseEntity<StudentDTO> response = controller.getById(1L);
 
-        String json = objectMapper.writeValueAsString(s);
-
-        mockMvc.perform(
-                post("/students")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(json)
-        )
-                .andExpect(status().isCreated())
-                .andExpect(header().string("Location", "/students/1"))
-                .andExpect(jsonPath("$.name").value("Lara"));
+        assertEquals(200, response.getStatusCodeValue());
+        assertEquals("Teste", response.getBody().getName());
     }
 
     @Test
-    public void testProcessRewards() throws Exception {
+    void testGetByIdNotFound() {
+        when(studentService.findById(1L)).thenReturn(Optional.empty());
 
-        Mockito.doNothing().when(studentService).processRewards();
+        ResponseEntity<StudentDTO> response = controller.getById(1L);
 
-        mockMvc.perform(post("/students/rewards"))
-                .andExpect(status().isOk());
+        assertEquals(404, response.getStatusCodeValue());
+    }
+
+    @Test
+    void testCreate() {
+        Student s = new Student(1L, "Novo", 3, 0);
+        when(studentService.save(any(Student.class))).thenReturn(s);
+
+        ResponseEntity<StudentDTO> response = controller.create(s);
+
+        assertEquals(201, response.getStatusCodeValue());
+        assertEquals(URI.create("/students/1"), response.getHeaders().getLocation());
+    }
+
+    @Test
+    void testProcessRewards() {
+        ResponseEntity<Void> response = controller.processRewards();
+
+        verify(studentService, times(1)).processRewards();
+        assertEquals(200, response.getStatusCodeValue());
     }
 }
