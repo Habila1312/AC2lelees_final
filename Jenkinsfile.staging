@@ -1,0 +1,21 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+
+        stage('Deploy Staging') {
+            steps {
+                bat 'docker-compose -f docker-compose.staging.yml up -d --build'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Staging Deploy OK!"
+        }
+    }
+}
