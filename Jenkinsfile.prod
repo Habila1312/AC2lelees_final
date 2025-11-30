@@ -1,35 +1,67 @@
 pipeline {
-  agent any
+    agent any
 
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    environment {
+        IMAGE_NAME = "habila/ac2lelees_final:latest"
     }
 
-    stage('Start container') {
-      steps {
-        echo 'Starting container from Docker Hub...'
-        bat 'docker-compose -f docker-compose.prod.yml pull' // Baixa a imagem do Docker Hub
-        bat 'docker-compose -f docker-compose.prod.yml up -d --no-color'
-        sleep time: 60, unit: 'SECONDS' // Aumenta o tempo para o serviço Spring Boot iniciar
-        bat 'docker-compose -f docker-compose.prod.yml logs' // Verifica os logs para conferir o status do Spring Boot
-        bat 'docker-compose -f docker-compose.prod.yml ps' // Verifica o status do container
-      }
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build & Tests (Quality Gate 99%)') {
+            steps {
+                bat 'mvn clean verify -DskipTests=false'
+            }
+            post {
+                always {
+                    junit 'target/surefire-reports/*.xml'
+                    jacoco execPattern: 'target/jacoco.exec'
+                    pmd canRunOnFailed: true, pattern: 'target/pmd.xml'
+                }
+                success {
+                    script {
+                        // Obtém a cobertura da linha do Jacoco para validação
+                        def coverage = jacoco(
+                            execPattern: 'target/jacoco.exec'
+                        )
+                        if (coverage.lineCoverage < 0.99) {
+                            error "❌ Quality Gate NÃO atingido! Cobertura atual: ${coverage.lineCoverage * 100}%"
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            when {
+                expression {
+                    // Apenas se o stage anterior passou com sucesso
+                    currentBuild.result == null || currentBuild.result == 'SUCCESS'
+                }
+            }
+            steps {
+                bat "docker build -t ${env.IMAGE_NAME} ."
+                bat "docker push ${env.IMAGE_NAME}"
+            }
+        }
+
+        stage('Deploy Staging') {
+            steps {
+                bat "docker compose down || echo 'Sem container para derrubar!'"
+                bat "docker compose up -d"
+                sleep time: 30, unit: 'SECONDS'
+            }
+        }
     }
 
-    stage('Run tests against the container') {
-      steps {
-        bat 'curl http://localhost:8585 || echo "Service not responding"'
-      }
+    post {
+        always {
+            echo "Pipeline Finalizada"
+        }
     }
-  }
-
-  post {
-    always {
-      echo 'Pipeline completed'
-      // Não derruba mais o container aqui
-    }
-  }
 }
