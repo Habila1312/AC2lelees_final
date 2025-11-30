@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  gamificacao:
+    container_name: gamificacao_app
+    image: habila/ac2lelees_final:latest
+    restart: always
+    ports:
+      - "8080:8080"
